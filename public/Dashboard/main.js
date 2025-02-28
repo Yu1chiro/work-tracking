@@ -206,45 +206,54 @@ const firebaseConfig = {
   });
   
   // Balance Calculator
-  document.getElementById('calculateBalanceBtn').addEventListener('click', function() {
-    const initialBalance = parseRupiahInput(document.getElementById('initialBalance').value);
-    const totalOrders = parseRupiahInput(document.getElementById('totalOrders').value);
-    const cashPayments = parseRupiahInput(document.getElementById('cashPayments').value);
-    
-    // Required balance calculation
-    const requiredBalance = totalOrders - cashPayments;
-    
-    // Net earnings calculation
-    const netEarnings = cashPayments - (initialBalance - requiredBalance);
-    
-    document.getElementById('requiredBalance').value = formatCurrency(requiredBalance);
-    document.getElementById('netEarnings').value = formatCurrency(netEarnings);
-    
-    // Save to database
-    if (currentUser) {
-      const balanceData = {
-        timestamp: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        initialBalance,
-        totalOrders,
-        cashPayments,
-        requiredBalance,
-        netEarnings
-      };
-      
-      database.ref(`users/${currentUser.uid}/balanceHistory`).push(balanceData)
-        .then(() => {
-          console.log("Balance data saved successfully");
-          showAlert("Data saldo berhasil disimpan", "success");
-          loadBalanceHistory();
-        })
-        .catch((error) => {
-          console.error("Error saving balance data:", error);
-          showAlert("Gagal menyimpan data saldo", "error");
-        });
-    }
-  });
+  // Balance Calculator
+document.getElementById('calculateBalanceBtn').addEventListener('click', function() {
+  const initialBalance = parseRupiahInput(document.getElementById('initialBalance').value); // Kredit saldo Anda di Grab
+  const totalOrders = parseRupiahInput(document.getElementById('totalOrders').value); // Total harga makanan yang dipesan
+  const cashPayments = parseRupiahInput(document.getElementById('cashPayments').value); // Uang yang dibayarkan customer (total + ongkir)
   
+  // Required balance calculation - ini adalah jumlah yang dipotong dari saldo kredit Anda
+  const requiredBalance = totalOrders;
+  
+  // Net earnings calculation - pendapatan bersih adalah selisih uang tunai yang diterima dikurangi 
+  // dengan selisih antara total pesanan dan ongkir
+  // Asumsi: cashPayments sudah termasuk ongkir, sehingga pendapatan bersih adalah cashPayments - totalOrders
+  const netEarnings = cashPayments - totalOrders;
+  
+  document.getElementById('requiredBalance').value = formatCurrency(requiredBalance);
+  document.getElementById('netEarnings').value = formatCurrency(netEarnings);
+  
+  // Save to database
+  if (currentUser) {
+    const balanceData = {
+      timestamp: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      initialBalance,
+      totalOrders,
+      cashPayments,
+      requiredBalance,
+      netEarnings
+    };
+    
+    database.ref(`users/${currentUser.uid}/balanceHistory`).push(balanceData)
+      .then(() => {
+        console.log("Balance data saved successfully");
+        showAlert("Data saldo berhasil disimpan", "success");
+        loadBalanceHistory();
+        
+        // Clear form fields after successful save
+        document.getElementById('initialBalance').value = '';
+        document.getElementById('totalOrders').value = '';
+        document.getElementById('cashPayments').value = '';
+        document.getElementById('requiredBalance').value = '';
+        document.getElementById('netEarnings').value = '';
+      })
+      .catch((error) => {
+        console.error("Error saving balance data:", error);
+        showAlert("Gagal menyimpan data saldo", "error");
+      });
+  }
+});
   // Load Balance History
   function loadBalanceHistory() {
     if (!currentUser) return;
@@ -303,7 +312,7 @@ const firebaseConfig = {
                   </div>
                   <div>
                     <p class="text-gray-600">Modal Diperlukan:</p>
-                    <p class="${record.requiredBalance < 0 ? 'text-red-600' : ''}">Rp ${formatCurrency(record.requiredBalance)}</p>
+                    <p class="${record.requiredBalance < 0 ? 'text-red-600' : 'text-yellow-600'} font-semibold">Rp ${formatCurrency(record.requiredBalance)}</p>
                   </div>
                   <div class="col-span-2">
                     <p class="text-gray-600">Pendapatan Bersih:</p>

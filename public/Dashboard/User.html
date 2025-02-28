@@ -11,6 +11,14 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <style>
+        /* Untuk Chrome, Safari, Edge, dan Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+    </style>
   <!-- Header -->
   <header class="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-4 shadow-md">
     <div class="flex justify-between items-center">
@@ -18,7 +26,7 @@
       <div class="flex items-center space-x-3">
         <img id="userPhoto" class="w-8 h-8 rounded-full object-cover border-2 border-white hidden" src="" alt="User photo">
         <span id="userName" class="text-sm hidden md:inline-block">-</span>
-        <button id="#" class="bg-blue-800 text-white text-sm px-3 py-1 rounded-md hover:bg-blue-900 transition duration-200">
+        <button id="logoutBtn" class="bg-red-600 text-white text-sm px-3 py-1 rounded-md hover:bg-blue-900 transition duration-200">
           Logout
         </button>
       </div>
@@ -63,25 +71,24 @@
             <label for="fareAmount" class="block text-sm font-medium text-gray-700 mb-1">Total Ongkos</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-              <input type="text" id="fareAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+              <input type="number" id="fareAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
             </div>
           </div>
           <div>
             <label for="paymentAmount" class="block text-sm font-medium text-gray-700 mb-1">Uang yang Dibayarkan</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-              <input type="text" id="paymentAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+              <input type="number" id="paymentAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
             </div>
           </div>
           <div>
             <label for="changeAmount" class="block text-sm font-medium text-gray-700 mb-1">Kembalian</label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-              <input type="text" id="changeAmount" class="block w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm" placeholder="0" readonly>
+            <input class="bg-green-200 rounded-lg py-5 px-5 w-full text-xl font-bold" type="number" id="changeAmount" readonly>
             </div>
           </div>
-          <button id="calculateChangeBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            Hitung Kembalian
+          <button id="calculateChangeBtn" class="w-full bg-blue-600 font-bold text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            Hitung
           </button>
         </div>
       </div>
@@ -96,21 +103,21 @@
             <label for="initialBalance" class="block text-sm font-medium text-gray-700 mb-1">Saldo Drive Bike</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-              <input type="text" id="initialBalance" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+              <input type="number" id="initialBalance" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
             </div>
           </div>
           <div>
             <label for="totalOrders" class="block text-sm font-medium text-gray-700 mb-1">Total Pesanan Order</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-              <input type="text" id="totalOrders" placeholder="contoh : 95.000" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+              <input type="number" id="totalOrders" placeholder="contoh : 95.000" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
             </div>
           </div>
           <div>
             <label for="cashPayments" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pembayaran Tunai Customer</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-              <input type="text" id="cashPayments" placeholder="contoh : 100.000" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+              <input type="number" id="cashPayments" placeholder="contoh : 100.000" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -118,7 +125,7 @@
               <label for="requiredBalance" class="block text-sm font-medium text-gray-700 mb-1">Putaran Modal Diperlukan</label>
               <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">Rp</span>
-                <input type="text" id="requiredBalance" class="block w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm" placeholder="0" readonly>
+                <input type="number" id="requiredBalance" class="block w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm" placeholder="0" readonly>
               </div>
             </div>
             <div>
@@ -211,11 +218,6 @@
           <img id="profilePhoto" class="w-24 h-24 rounded-full object-cover border-4 border-blue-200 hidden mb-4" src="" alt="User profile photo">
           <h3 id="profileName" class="text-lg font-medium text-gray-900">User</h3>
           <p id="profileEmail" class="text-gray-600">user@example.com</p>
-        </div>
-        <div class="mt-6">
-          <button id="logoutBtn" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-            Logout
-          </button>
         </div>
       </div>
     </section>
