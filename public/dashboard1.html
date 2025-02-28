@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work Tracker | Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <header class="bg-blue-600 text-white p-4 shadow-md">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-bold">Work Tracker</h1>
+      <div class="flex items-center space-x-2">
+        <span id="userName" class="text-sm hidden md:inline-block">-</span>
+        <button id="logoutBtn" class="bg-blue-700 text-white text-sm px-3 py-1 rounded-md hover:bg-blue-800">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow p-4 pb-20">
+    <!-- Payment Calculator Section -->
+    <section id="paymentSection" class="mb-8">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Kalkulator Pembayaran</h2>
+      <div class="bg-white p-4 rounded-lg shadow-md">
+        <div class="space-y-4">
+          <div>
+            <label for="fareAmount" class="block text-sm font-medium text-gray-700 mb-1">Total Ongkos</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="number" id="fareAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <label for="paymentAmount" class="block text-sm font-medium text-gray-700 mb-1">Uang yang Dibayarkan</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="number" id="paymentAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <label for="changeAmount" class="block text-sm font-medium text-gray-700 mb-1">Kembalian</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="text" id="changeAmount" class="block w-full pl-10 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" readonly>
+            </div>
+          </div>
+          <button id="calculateChangeBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Hitung Kembalian
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Balance Tracker Section -->
+    <section id="balanceSection" class="mb-8 hidden">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Pelacak Saldo</h2>
+      <div class="bg-white p-4 rounded-lg shadow-md">
+        <div class="space-y-4">
+          <div>
+            <label for="initialBalance" class="block text-sm font-medium text-gray-700 mb-1">Saldo Modal Awal</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="number" id="initialBalance" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <label for="totalOrders" class="block text-sm font-medium text-gray-700 mb-1">Total Pesanan (dari aplikasi)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="number" id="totalOrders" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <label for="cashPayments" class="block text-sm font-medium text-gray-700 mb-1">Pembayaran Tunai dari Pelanggan</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="number" id="cashPayments" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+            </div>
+          </div>
+          <div class="pt-2 border-t border-gray-200">
+            <label for="requiredBalance" class="block text-sm font-medium text-gray-700 mb-1">Saldo Modal yang Diperlukan</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="text" id="requiredBalance" class="block w-full pl-10 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" readonly>
+            </div>
+          </div>
+          <div>
+            <label for="netEarnings" class="block text-sm font-medium text-gray-700 mb-1">Pendapatan Bersih</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="text" id="netEarnings" class="block w-full pl-10 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" readonly>
+            </div>
+          </div>
+          <button id="calculateBalanceBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Hitung Saldo
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expense Tracker Section -->
+    <section id="expenseSection" class="mb-8 hidden">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Pelacak Pengeluaran</h2>
+      
+      <!-- Input Form -->
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <div class="space-y-4">
+          <div>
+            <label for="expenseDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+            <input type="date" id="expenseDate" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label for="expenseType" class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
+            <select id="expenseType" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+              <option value="income">Pemasukan</option>
+              <option value="expense">Pengeluaran</option>
+            </select>
+          </div>
+          <div>
+            <label for="expenseDescription" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+            <input type="text" id="expenseDescription" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Makan siang, bensin, dll">
+          </div>
+          <div>
+            <label for="expenseAmount" class="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">Rp</span>
+              <input type="number" id="expenseAmount" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0">
+            </div>
+          </div>
+          <button id="addExpenseBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Tambah Catatan
+          </button>
+        </div>
+      </div>
+      
+      <!-- Summary -->
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <h3 class="font-bold text-gray-800 mb-2">Ringkasan Hari Ini</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-600">Total Pemasukan</p>
+            <p id="todayIncome" class="font-semibold text-green-600">Rp 0</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600">Total Pengeluaran</p>
+            <p id="todayExpenses" class="font-semibold text-red-600">Rp 0</p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-sm text-gray-600">Saldo Hari Ini</p>
+            <p id="todayBalance" class="font-semibold">Rp 0</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Transactions List -->
+      <div class="bg-white p-4 rounded-lg shadow-md">
+        <h3 class="font-bold text-gray-800 mb-2">Daftar Transaksi</h3>
+        <div id="transactionsList" class="space-y-3">
+          <p class="text-center text-gray-500 italic py-4">Belum ada transaksi</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+    <div class="flex justify-around">
+      <button id="navPayment" class="flex flex-col items-center py-2 px-4 text-blue-600 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+        </svg>
+        <span class="text-xs mt-1">Pembayaran</span>
+      </button>
+      <button id="navBalance" class="flex flex-col items-center py-2 px-4 text-gray-600 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+        <span class="text-xs mt-1">Saldo</span>
+      </button>
+      <button id="navExpense" class="flex flex-col items-center py-2 px-4 text-gray-600 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <span class="text-xs mt-1">Pengeluaran</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAef7qSseJeQkjYZGYuNmGZCqkcWzA05I0",
+      authDomain: "work-tracker-bc2d4.firebaseapp.com",
+      databaseURL: "https://work-tracker-bc2d4-default-rtdb.firebaseio.com",
+      projectId: "work-tracker-bc2d4",
+      storageBucket: "work-tracker-bc2d4.firebasestorage.app",
+      messagingSenderId: "185613968614",
+      appId: "1:185613968614:web:439658239bc71ec2640727",
+      measurementId: "G-11R7H9G6S9"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+    let currentUser = null;
+    
+    // Check authentication
+    auth.onAuthStateChanged(function(user) {
+      if (user) {
+        // User is signed in
+        currentUser = user;
+        document.getElementById('userName').textContent = user.displayName || user.email;
+        loadUserData();
+      } else {
+        // User is signed out, redirect to login
+        window.location.href = '/';
+      }
+    });
+    
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      auth.signOut().then(() => {
+        window.location.href = '/';
+      }).catch((error) => {
+        console.error("Logout error:", error);
+      });
+    });
+    
+    // Navigation
+    document.getElementById('navPayment').addEventListener('click', function() {
+      showSection('paymentSection');
+      updateNavActiveState('navPayment');
+    });
+    
+    document.getElementById('navBalance').addEventListener('click', function() {
+      showSection('balanceSection');
+      updateNavActiveState('navBalance');
+    });
+    
+    document.getElementById('navExpense').addEventListener('click', function() {
+      showSection('expenseSection');
+      updateNavActiveState('navExpense');
+      loadExpenses();
+    });
+    
+    function showSection(sectionId) {
+      const sections = ['paymentSection', 'balanceSection', 'expenseSection'];
+      sections.forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(sectionId).classList.remove('hidden');
+    }
+    
+    function updateNavActiveState(activeNavId) {
+      const navItems = ['navPayment', 'navBalance', 'navExpense'];
+      navItems.forEach(id => {
+        const navElem = document.getElementById(id);
+        if (id === activeNavId) {
+          navElem.classList.replace('text-gray-600', 'text-blue-600');
+        } else {
+          navElem.classList.replace('text-blue-600', 'text-gray-600');
+        }
+      });
+    }
+    
+    // Payment Calculator
+    document.getElementById('calculateChangeBtn').addEventListener('click', function() {
+      const fare = parseFloat(document.getElementById('fareAmount').value) || 0;
+      const payment = parseFloat(document.getElementById('paymentAmount').value) || 0;
+      const change = payment - fare;
+      
+      document.getElementById('changeAmount').value = formatCurrency(change);
+    });
+    
+    // Balance Calculator
+    document.getElementById('calculateBalanceBtn').addEventListener('click', function() {
+      const initialBalance = parseFloat(document.getElementById('initialBalance').value) || 0;
+      const totalOrders = parseFloat(document.getElementById('totalOrders').value) || 0;
+      const cashPayments = parseFloat(document.getElementById('cashPayments').value) || 0;
+      
+      // Required balance calculation
+      const requiredBalance = totalOrders - cashPayments;
+      
+      // Net earnings calculation
+      const netEarnings = cashPayments - (initialBalance - requiredBalance);
+      
+      document.getElementById('requiredBalance').value = formatCurrency(requiredBalance);
+      document.getElementById('netEarnings').value = formatCurrency(netEarnings);
+      
+      // Save to database
+      if (currentUser) {
+        const balanceData = {
+          timestamp: Date.now(),
+          initialBalance,
+          totalOrders,
+          cashPayments,
+          requiredBalance,
+          netEarnings
+        };
+        
+        database.ref(`users/${currentUser.uid}/balanceHistory`).push(balanceData)
+          .then(() => {
+            console.log("Balance data saved successfully");
+          })
+          .catch((error) => {
+            console.error("Error saving balance data:", error);
+          });
+      }
+    });
+    
+    // Expense Tracker
+    document.getElementById('addExpenseBtn').addEventListener('click', function() {
+      if (!currentUser) return;
+      
+      const date = document.getElementById('expenseDate').value || new Date().toISOString().split('T')[0];
+      const type = document.getElementById('expenseType').value;
+      const description = document.getElementById('expenseDescription').value;
+      const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+      
+      if (description && amount > 0) {
+        const expenseData = {
+          date,
+          type,
+          description,
+          amount,
+          timestamp: Date.now()
+        };
+        
+        database.ref(`users/${currentUser.uid}/expenses`).push(expenseData)
+          .then(() => {
+            console.log("Expense data saved successfully");
+            // Clear form
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseAmount').value = '';
+            // Reload expenses
+            loadExpenses();
+          })
+          .catch((error) => {
+            console.error("Error saving expense data:", error);
+          });
+      } else {
+        alert("Silakan isi deskripsi dan jumlah denganbenar");
+      }
+    });
+    
+    function loadExpenses() {
+      if (!currentUser) return;
+      
+      const today = new Date().toISOString().split('T')[0];
+      const transactionsList = document.getElementById('transactionsList');
+      
+      // Clear list
+      transactionsList.innerHTML = '<p class="text-center text-gray-500 italic py-4">Memuat transaksi...</p>';
+      
+      // Get expenses from database
+      database.ref(`users/${currentUser.uid}/expenses`)
+        .orderByChild('timestamp')
+        .once('value')
+        .then((snapshot) => {
+          if (snapshot.exists()) {
+            let transactions = [];
+            let todayIncome = 0;
+            let todayExpenses = 0;
+            
+            snapshot.forEach((childSnapshot) => {
+              const expense = childSnapshot.val();
+              expense.id = childSnapshot.key;
+              
+              // Add to transactions array
+              transactions.push(expense);
+              
+              // Calculate today's summary
+              if (expense.date === today) {
+                if (expense.type === 'income') {
+                  todayIncome += expense.amount;
+                } else {
+                  todayExpenses += expense.amount;
+                }
+              }
+            });
+            
+            // Sort transactions by date (most recent first)
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Update summary
+            document.getElementById('todayIncome').textContent = formatCurrency(todayIncome);
+            document.getElementById('todayExpenses').textContent = formatCurrency(todayExpenses);
+            document.getElementById('todayBalance').textContent = formatCurrency(todayIncome - todayExpenses);
+            document.getElementById('todayBalance').className = 
+              (todayIncome - todayExpenses) >= 0 ? 'font-semibold text-green-600' : 'font-semibold text-red-600';
+            
+            // Display transactions
+            if (transactions.length > 0) {
+              transactionsList.innerHTML = '';
+              transactions.forEach(transaction => {
+                const isIncome = transaction.type === 'income';
+                const transactionEl = document.createElement('div');
+                transactionEl.className = 'flex justify-between items-center p-3 border-b border-gray-200';
+                transactionEl.innerHTML = `
+                  <div>
+                    <p class="font-medium">${transaction.description}</p>
+                    <p class="text-sm text-gray-500">${formatDate(transaction.date)}</p>
+                  </div>
+                  <div class="flex items-center">
+                    <span class="${isIncome ? 'text-green-600' : 'text-red-600'} font-semibold">
+                      ${isIncome ? '+' : '-'} ${formatCurrency(transaction.amount)}
+                    </span>
+                    <button class="ml-3 text-red-500 delete-btn" data-id="${transaction.id}">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                `;
+                transactionsList.appendChild(transactionEl);
+                
+                // Add delete event listener
+                transactionEl.querySelector('.delete-btn').addEventListener('click', function() {
+                  deleteTransaction(this.dataset.id);
+                });
+              });
+            } else {
+              transactionsList.innerHTML = '<p class="text-center text-gray-500 italic py-4">Belum ada transaksi</p>';
+            }
+          } else {
+            transactionsList.innerHTML = '<p class="text-center text-gray-500 italic py-4">Belum ada transaksi</p>';
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading expenses:", error);
+          transactionsList.innerHTML = '<p class="text-center text-red-500 italic py-4">Error memuat transaksi</p>';
+        });
+    }
+    
+    function deleteTransaction(id) {
+      if (confirm('Yakin ingin menghapus transaksi ini?')) {
+        database.ref(`users/${currentUser.uid}/expenses/${id}`).remove()
+          .then(() => {
+            console.log("Transaction deleted successfully");
+            loadExpenses();
+          })
+          .catch((error) => {
+            console.error("Error deleting transaction:", error);
+          });
+      }
+    }
+    
+    function loadUserData() {
+      // Set today's date as default for expense date
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('expenseDate').value = today;
+    }
+    
+    // Utility functions
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('id-ID').format(amount);
+    }
+    
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    }
+    
+    // Initialize to payment section
+    showSection('paymentSection');
+    updateNavActiveState('navPayment');
+  </script> -->
+</body>
+</html>
