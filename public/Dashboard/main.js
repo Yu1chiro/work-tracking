@@ -311,7 +311,7 @@ document.getElementById('calculateBalanceBtn').addEventListener('click', functio
                     <p>Rp ${formatCurrency(record.cashPayments)}</p>
                   </div>
                   <div>
-                    <p class="text-gray-600">Modal Diperlukan:</p>
+                    <p class="text-gray-600">Putaran Modal Diperlukan:</p>
                     <p class="${record.requiredBalance < 0 ? 'text-red-600' : 'text-yellow-600'} font-semibold">Rp ${formatCurrency(record.requiredBalance)}</p>
                   </div>
                   <div class="col-span-2">
